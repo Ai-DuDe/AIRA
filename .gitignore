@@ -1,0 +1,17 @@
+# never commit patient data, recordings or local logs
+data/
+models/
+*.mp4
+*.avi
+*.mkv
+*.hdf5
+*.npz
+*.pkl
+aira_events.csv
+zones.json
+*.log
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
