@@ -48,6 +48,44 @@ WORK_W = 640
 FREEZE_S = 35.0  # alarm needs 20 s without a breath; margin for the last breath before freezing
 
 
+PRIVACY = os.environ.get("AIRA_PRIVACY") == "1"   # blur the babies (for screenshots / videos to share)
+
+
+_pf = None
+
+
+def privacy_blur(img, state):
+    """Blur only the baby's head (found with MediaPipe body points; held between checks).
+    Only the picture shown is blurred; AIRA still measures the original video."""
+    global _pf
+    if _pf is None:
+        from aira.person import PersonFinder
+        _pf = PersonFinder(1)
+    H, W = img.shape[:2]
+    state["n"] = state.get("n", 0) + 1
+    if state["n"] % 5 == 1:
+        for p in _pf.find(img):
+            pts = p.pts[:11]
+            ok = pts[:, 2] >= 0.2
+            hp = pts[ok, :2] if ok.sum() >= 2 else pts[:, :2]
+            c = hp.mean(0)
+            r = max(2.3 * float(np.max(np.linalg.norm(hp - c, axis=1))), 0.09 * W)
+            state["head"] = (c, r)
+    out = img.copy()
+    if "head" in state:
+        (cx, cy), r = state["head"]
+        soft = cv2.GaussianBlur(cv2.resize(cv2.resize(img, (W // 14, H // 14)), (W, H)), (0, 0), 5)
+        m = np.zeros((H, W), np.uint8)
+        cv2.circle(m, (int(cx), int(cy)), int(r), 255, -1, cv2.LINE_AA)
+        m = cv2.GaussianBlur(m, (0, 0), r * 0.15)[..., None] / 255.0
+        out = (soft * m + img * (1 - m)).astype(np.uint8)
+        cv2.putText(out, "blurred for privacy", (int(cx - 60), int(max(14, cy - r - 6))), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.42, (230, 230, 230), 1, cv2.LINE_AA)
+    else:
+        out = cv2.GaussianBlur(cv2.resize(cv2.resize(img, (W // 14, H // 14)), (W, H)), (0, 0), 5)   # not found yet
+    return out
+
+
 def prep(frame):
     g = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     g = cv2.resize(g, (WORK_W, int(g.shape[0] * WORK_W / g.shape[1])), interpolation=cv2.INTER_AREA)
@@ -99,6 +137,7 @@ class Cot:
         self.frozen = None
         self.rng = np.random.default_rng(len(name))
         self.display = None
+        self.priv = {}
         self.snap = None
 
     def _open_next(self, t):
@@ -113,6 +152,7 @@ class Cot:
         self.clip_t0 = t
         self.mon.demo_gt = list(t + gt)
         self.frame_i = 0
+        self.priv = {}
         self.mon.motion.reset()  # new recording: different framing, don't compare across the cut
         self.clip_name = os.path.relpath(mp4, ROOT)
 
@@ -153,6 +193,8 @@ class Cot:
         self.heart_worker.submit(disp, t)   # pulse from skin colour, before boxes are drawn on it
         apply_to(self.mon, self.heart)
         x, y, w, h = self.zone
+        if PRIVACY:
+            disp = privacy_blur(disp, self.priv)
         cv2.rectangle(disp, (x, y), (x + w, y + h), (0, 0, 255), 2)
         cv2.putText(disp, self.clip_name, (8, disp.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 1, cv2.LINE_AA)
         self.frozen = (g, disp)

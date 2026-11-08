@@ -156,7 +156,8 @@ class HeartRateEstimator:
             self.colour = False
             return None
         sub = frame_bgr[::8, ::8].astype(np.int16)
-        if np.abs(sub[..., 0] - sub[..., 1]).mean() < 2 and np.abs(sub[..., 1] - sub[..., 2]).mean() < 2:
+        lab = cv2.cvtColor(np.clip(sub, 0, 255).astype(np.uint8), cv2.COLOR_BGR2LAB).reshape(-1, 3).astype(np.float32)
+        if lab[:, 1].std() + lab[:, 2].std() < 4:                 # night vision / grey picture: no skin colour
             self.colour, self.bpm, self.box, self.wave = False, None, None, None   # IR / grayscale camera
             return None
         self.colour = True
@@ -364,11 +365,24 @@ class HeartRateEstimator:
             Hs[n - L:n] += h
         lo, hi = self.band[0], min(self.band[1], 0.45 * self.fps)
         sos = sps.butter(3, [lo, hi], btype="band", fs=self.fps, output="sos")
-        x = sps.sosfiltfilt(sos, Hs)
-        F = np.abs(np.fft.rfft(x * np.hanning(N), n=8 * N)) ** 2
         f = np.fft.rfftfreq(8 * N, 1 / self.fps)
         band = (f >= lo) & (f <= hi)
-        Fb, fb = F[band], f[band]
+        fb = f[band]
+
+        def spectrum(sig):
+            x = sps.sosfiltfilt(sos, sig - sig.mean())
+            Fb = (np.abs(np.fft.rfft(x * np.hanning(N), n=8 * N)) ** 2)[band]
+            k = int(np.argmax(Fb))
+            q = Fb[np.abs(fb - fb[k]) <= 0.12].sum() / (Fb.sum() + 1e-12)
+            return x, Fb, q
+
+        # two classic rPPG methods; keep whichever gives the cleaner pulse this time
+        Cn = C / (C.mean(axis=0, keepdims=True) + 1e-9)
+        Xc = 3 * Cn[:, 0] - 2 * Cn[:, 1]
+        Yc = 1.5 * Cn[:, 0] + Cn[:, 1] - 1.5 * Cn[:, 2]
+        xc, yc = sps.sosfiltfilt(sos, Xc - Xc.mean()), sps.sosfiltfilt(sos, Yc - Yc.mean())
+        chrom = xc - (xc.std() / (yc.std() + 1e-12)) * yc
+        x, Fb, q = max((spectrum(Hs), spectrum(chrom)), key=lambda v: v[2])
         k = int(np.argmax(Fb))
         sm = getattr(self, "smooth", None)
         if sm is not None:                                       # prefer a strong peak near the current rate
