@@ -42,7 +42,7 @@ With hospital-grade hardware:
 - **Infrared (night-vision) cameras:** clear view in total darkness.
 - **Thermal cameras:** see the warm air at the nose, so they can catch obstructive apnea.
 - **Infrared and thermal together:** chest motion plus airflow, so each one checks the other.
-- **Second sensor, an under-mattress pad:** a piezo film or load cell under each cot senses breathing through the bedding, even under blankets, in the dark or with the baby turned away. AIRA would fuse both: alarm when neither detects breathing, a lower-confidence "check baby" warning when only one loses the signal. One pad per cot also gives each baby their own signal in a ward. (A pad senses movement too, so obstructive apnea still needs thermal.)
+- **Second sensor, capacitive (electric-field) pad:** a sealed pad under the mattress forms a tiny capacitor with the baby's body, like a phone screen sensing a finger without being pressed. Each breath slightly changes that capacitance, so the pad reads breathing through the bedding without touching the skin, even under blankets, in the dark or with the baby turned away. AIRA would fuse both: alarm when neither detects breathing, a lower-confidence "check baby" warning when only one loses the signal, and one pad per cot gives each baby their own signal. Safety: battery-powered, fully sealed, no exposed metal or cables. (It senses movement too, so obstructive apnea still needs thermal.)
 - **Clinical trial:** compare against wired NICU monitors on real patients.
 - **Hospital integration:** send alarms to the nurse station or pagers.
 
