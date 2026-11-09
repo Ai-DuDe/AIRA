@@ -6,6 +6,8 @@ Contactless apnea alerts for newborns from a camera. No wires on the baby.
 
 ![AIRA demo: three real infant recordings, Cot 2 raises an apnea alarm](docs/demo.png)
 
+**Full write-up (PDF):** [How AIRA works and the problems it solves](docs/AIRA_How_It_Works.pdf)
+
 ## How it works
 
 1. **Find the baby:** AIRA finds the moving chest or belly automatically, or you draw the cot.
@@ -78,4 +80,5 @@ The Cot 2 warning comes at about 15 s and the alarm at 20 s after the apnea star
 Video never leaves the computer and is never saved. See [SECURITY.md](SECURITY.md).
 
 MIT licence: free to use. Please credit **AIRA by Diuthendrh R D** if you use it (see [LICENSE](LICENSE)).
+The write-up PDF is © 2026 Diuthendrh R D, licensed CC BY 4.0 (share with credit).
 Uses Google MediaPipe and the AIR-125 dataset (not included).
