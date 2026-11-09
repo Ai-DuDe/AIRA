@@ -4,9 +4,7 @@ Contactless apnea alerts for newborns from a camera. No wires on the baby.
 
 > ⚠️ Research prototype. Not a medical device.
 
-![AIRA demo: three real infant recordings, Cot 2 raises an apnea alarm](docs/demo.png)
-
-**Full write-up (PDF):** [How AIRA works and the problems it solves](docs/AIRA_How_It_Works.pdf)
+**Full write-up (PDF):** [How AIRA works and the problems it solves](AIRA_How_It_Works.pdf)
 
 ## How it works
 
@@ -54,8 +52,6 @@ pip install -r requirements.txt
 python get_models.py   # optional AI models, ~9 MB
 python launcher.py     # or double-click AIRA.bat
 ```
-
-![Launcher](docs/launcher.png)
 
 Keys: `F` full screen, `C` camera view. The **Stop** button closes the page.
 
